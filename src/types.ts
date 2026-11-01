@@ -29,6 +29,18 @@ export interface StatusPayload {
   actual_cps: number;
 }
 
+export interface Profile {
+  id: string;
+  name: string;
+  config: ClickerConfig;
+}
+
+export interface ProfilesFile {
+  version: number;
+  profiles: Profile[];
+  active_id: string | null;
+}
+
 export const MOUSE_ACTIONS: Array<{ value: string; label: string; action: ClickAction; glyph: string }> = [
   { value: "mouse-left", label: "Left Click", action: { kind: "MouseLeft" }, glyph: "L" },
   { value: "mouse-right", label: "Right Click", action: { kind: "MouseRight" }, glyph: "R" },

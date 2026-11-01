@@ -1,6 +1,6 @@
 [package]
 name = "blitzclick"
-version = "0.2.0"
+version = "0.3.2"
 description = "A fast desktop autoclicker with a retro UI."
 authors = ["Euphoria911"]
 edition = "2024"
@@ -21,6 +21,9 @@ enigo = "0.3"
 global-hotkey = "0.6"
 anyhow = "1"
 parking_lot = "0.12"
+
+[dev-dependencies]
+tempfile = "3"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["timeapi"] }

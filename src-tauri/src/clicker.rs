@@ -115,11 +115,22 @@ impl Clicker {
             let mut measure_anchor_count: u64 = 0;
             const MEASURE_WINDOW: Duration = Duration::from_millis(500);
 
+            // Hybrid pacer: anchor the next fire time ahead of us. Sleep for
+            // all but the final ~1 ms, then spin to the exact instant. This
+            // bypasses `thread::sleep`'s ~1.6 ms wakeup overhead which otherwise
+            // caps the loop around 500-600 Hz on Windows.
+            let mut next_fire = Instant::now();
+            // If the user drops the interval mid-run and we fall more than this
+            // far behind the target cadence, we reset the anchor to avoid a
+            // runaway catch-up burst.
+            const SLACK: Duration = Duration::from_millis(50);
+
             while running.load(Ordering::Relaxed) {
-                let (action, interval, stop_after) = {
+                let (action, interval_ms, stop_after) = {
                     let cfg = config.lock();
                     (cfg.action.clone(), cfg.interval_ms.max(1), cfg.stop_after)
                 };
+                let interval = Duration::from_millis(interval_ms);
 
                 if action.fire(&mut enigo) {
                     let new_count = count.fetch_add(1, Ordering::Relaxed) + 1;
@@ -151,7 +162,25 @@ impl Clicker {
                     }
                 }
 
-                thread::sleep(Duration::from_millis(interval));
+                next_fire += interval;
+                let now = Instant::now();
+                if next_fire + SLACK < now {
+                    // We've drifted — reset instead of burst-firing.
+                    next_fire = now + interval;
+                }
+
+                // Coarse sleep for the bulk of the gap, if any ms remain.
+                let remaining = next_fire.saturating_duration_since(Instant::now());
+                if remaining > Duration::from_millis(1) {
+                    thread::sleep(remaining - Duration::from_millis(1));
+                }
+                // Spin the last stretch to land on the exact instant.
+                while Instant::now() < next_fire {
+                    if !running.load(Ordering::Relaxed) {
+                        break;
+                    }
+                    std::hint::spin_loop();
+                }
             }
 
             actual_cps_bits.store(0, Ordering::Relaxed);
