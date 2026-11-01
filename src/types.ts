@@ -1,70 +1,80 @@
-// Mirrors Rust's serde-tagged enums (tag = "kind", content = "value").
+// Mirrors Rust's serde-tagged enum: `#[serde(tag = "kind", content = "value")]`.
+// A Key action carries a raw KeyboardEvent.code string, so ANY physical key the
+// OS surfaces maps straight through — no enum enumeration required.
 
 export type ClickAction =
   | { kind: "MouseLeft" }
   | { kind: "MouseRight" }
   | { kind: "MouseMiddle" }
-  | { kind: "Key"; value: KeyBinding };
+  | { kind: "Key"; value: { code: string } };
 
-export type KeyBinding =
-  | { kind: "Space" }
-  | { kind: "Enter" }
-  | { kind: "Tab" }
-  | { kind: "Escape" }
-  | { kind: "Backspace" }
-  | { kind: "F"; value: number }
-  | { kind: "Char"; value: string }
-  | { kind: "Shift" }
-  | { kind: "Control" }
-  | { kind: "Alt" }
-  | { kind: "ArrowLeft" }
-  | { kind: "ArrowRight" }
-  | { kind: "ArrowUp" }
-  | { kind: "ArrowDown" };
+export interface Hotkey {
+  code: string;
+  shift: boolean;
+  ctrl: boolean;
+  alt: boolean;
+  meta: boolean;
+}
 
 export interface ClickerConfig {
   action: ClickAction;
   interval_ms: number;
   stop_after: number | null;
-  hotkey: KeyBinding;
+  hotkey: Hotkey;
 }
 
 export interface StatusPayload {
   running: boolean;
   count: number;
+  actual_cps: number;
 }
 
-/* ------- UI helpers for turning enums into dropdown values ------- */
-
-export const MOUSE_ACTIONS = [
-  { value: "mouse-left", label: "Left Click", action: { kind: "MouseLeft" } as ClickAction },
-  { value: "mouse-right", label: "Right Click", action: { kind: "MouseRight" } as ClickAction },
-  { value: "mouse-middle", label: "Middle Click", action: { kind: "MouseMiddle" } as ClickAction },
-] as const;
-
-export const KEY_OPTIONS: Array<{ value: string; label: string; binding: KeyBinding }> = [
-  { value: "space", label: "Space", binding: { kind: "Space" } },
-  { value: "enter", label: "Enter", binding: { kind: "Enter" } },
-  { value: "tab", label: "Tab", binding: { kind: "Tab" } },
-  ...Array.from({ length: 12 }, (_, i) => ({
-    value: `f${i + 1}`,
-    label: `F${i + 1}`,
-    binding: { kind: "F", value: i + 1 } as KeyBinding,
-  })),
-  ...["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
-      "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"].map((c) => ({
-    value: `char-${c}`,
-    label: c.toUpperCase(),
-    binding: { kind: "Char", value: c } as KeyBinding,
-  })),
+export const MOUSE_ACTIONS: Array<{ value: string; label: string; action: ClickAction; glyph: string }> = [
+  { value: "mouse-left", label: "Left Click", action: { kind: "MouseLeft" }, glyph: "L" },
+  { value: "mouse-right", label: "Right Click", action: { kind: "MouseRight" }, glyph: "R" },
+  { value: "mouse-middle", label: "Middle Click", action: { kind: "MouseMiddle" }, glyph: "M" },
 ];
 
-export const HOTKEY_OPTIONS: Array<{ value: string; label: string; binding: KeyBinding }> =
-  Array.from({ length: 12 }, (_, i) => ({
-    value: `f${i + 1}`,
-    label: `F${i + 1}`,
-    binding: { kind: "F", value: i + 1 } as KeyBinding,
-  }));
+/** Short label for a `KeyboardEvent.code` ("KeyA" -> "A", "ArrowLeft" -> "←"). */
+export function codeLabel(code: string): string {
+  if (code.startsWith("Key")) return code.slice(3);
+  if (code.startsWith("Digit")) return code.slice(5);
+  if (code.startsWith("Numpad")) return `Num${code.slice(6)}`;
+  const named: Record<string, string> = {
+    ArrowLeft: "←",
+    ArrowRight: "→",
+    ArrowUp: "↑",
+    ArrowDown: "↓",
+    Space: "SPACE",
+    Escape: "ESC",
+    Enter: "ENTER",
+    Backspace: "BKSP",
+    Delete: "DEL",
+    Insert: "INS",
+    PageUp: "PGUP",
+    PageDown: "PGDN",
+    ControlLeft: "LCTRL",
+    ControlRight: "RCTRL",
+    ShiftLeft: "LSHIFT",
+    ShiftRight: "RSHIFT",
+    AltLeft: "LALT",
+    AltRight: "RALT",
+    MetaLeft: "LMETA",
+    MetaRight: "RMETA",
+    Minus: "-",
+    Equal: "=",
+    BracketLeft: "[",
+    BracketRight: "]",
+    Backslash: "\\",
+    Semicolon: ";",
+    Quote: "'",
+    Backquote: "`",
+    Comma: ",",
+    Period: ".",
+    Slash: "/",
+  };
+  return named[code] ?? code;
+}
 
 export function describeAction(a: ClickAction): string {
   switch (a.kind) {
@@ -75,43 +85,34 @@ export function describeAction(a: ClickAction): string {
     case "MouseMiddle":
       return "Middle Click";
     case "Key":
-      return `Key: ${describeKey(a.value)}`;
+      return `Key: ${codeLabel(a.value.code)}`;
   }
 }
 
-export function describeKey(k: KeyBinding): string {
-  switch (k.kind) {
-    case "F":
-      return `F${k.value}`;
-    case "Char":
-      return k.value.toUpperCase();
-    default:
-      return k.kind;
-  }
+export function describeHotkey(h: Hotkey): string {
+  const parts: string[] = [];
+  if (h.ctrl) parts.push("CTRL");
+  if (h.shift) parts.push("SHIFT");
+  if (h.alt) parts.push("ALT");
+  if (h.meta) parts.push("META");
+  parts.push(codeLabel(h.code));
+  return parts.join(" + ");
 }
 
-export function keyBindingToOptionValue(k: KeyBinding): string {
-  switch (k.kind) {
-    case "F":
-      return `f${k.value}`;
-    case "Char":
-      return `char-${k.value}`;
-    case "Space":
-      return "space";
-    case "Enter":
-      return "enter";
-    case "Tab":
-      return "tab";
-    default:
-      return k.kind.toLowerCase();
-  }
+export const CPS_PRESETS: Array<{ cps: number; label: string }> = [
+  { cps: 5, label: "CHILL" },
+  { cps: 20, label: "FAST" },
+  { cps: 50, label: "WILD" },
+  { cps: 100, label: "RAGE" },
+  { cps: 1000, label: "MAX" },
+];
+
+export function cpsToIntervalMs(cps: number): number {
+  if (cps <= 0) return 1000;
+  return Math.max(1, Math.round(1000 / cps));
 }
 
-export function actionToOptionValue(a: ClickAction): string {
-  if (a.kind === "Key") return keyBindingToOptionValue(a.value);
-  return a.kind === "MouseLeft"
-    ? "mouse-left"
-    : a.kind === "MouseRight"
-      ? "mouse-right"
-      : "mouse-middle";
+export function intervalMsToCps(ms: number): number {
+  if (ms <= 0) return 1000;
+  return Math.round(1000 / ms);
 }

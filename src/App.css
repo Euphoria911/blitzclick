@@ -2,10 +2,10 @@
 
 @layer base {
   :root {
-    /* Dark arcade palette — synthwave-ish, high contrast */
-    --background: #1a0b2e;
+    /* dark arcade / synthwave base */
+    --background: #140824;
     --foreground: #f5edd6;
-    --card: #22133d;
+    --card: #1f0f3c;
     --card-foreground: #f5edd6;
     --primary: #ff2975;
     --primary-foreground: #0d0617;
@@ -24,6 +24,14 @@
     --input: #2b1b4d;
     --popover: #22133d;
     --popover-foreground: #f5edd6;
+
+    /* v0.2 extra palette */
+    --bc-pink: #ff2975;
+    --bc-cyan: #30e5ff;
+    --bc-yellow: #ffe14d;
+    --bc-orange: #ff8c42;
+    --bc-green: #4dff9b;
+    --bc-violet: #a86bff;
   }
 }
 
@@ -59,13 +67,17 @@ html, body, #root {
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: ui-sans-serif, system-ui, sans-serif;
   overflow: hidden;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255, 41, 117, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(48, 229, 255, 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 60%, rgba(168, 107, 255, 0.10) 0%, transparent 60%),
+    var(--background);
 }
 
-/* CRT-style scanline overlay — subtle, non-interactive */
+/* CRT scanlines */
 body::after {
   content: "";
   position: fixed;
@@ -74,12 +86,311 @@ body::after {
   background: repeating-linear-gradient(
     to bottom,
     transparent 0 2px,
-    rgba(0, 0, 0, 0.08) 2px 3px
+    rgba(0, 0, 0, 0.10) 2px 3px
   );
   z-index: 9999;
 }
 
-/* Scrollbar */
+/* scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--card); }
-::-webkit-scrollbar-thumb { background: var(--primary); border: 2px solid var(--border); }
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border: 2px solid var(--border);
+}
+
+/* ---------- title ---------- */
+.bc-title {
+  color: var(--bc-pink);
+  text-shadow:
+    3px 3px 0 var(--border),
+    6px 6px 0 var(--bc-violet);
+  letter-spacing: 0.08em;
+}
+
+/* ---------- live badge ---------- */
+.bc-live-badge {
+  border: 3px solid var(--border);
+  box-shadow: 3px 3px 0 var(--border);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-head);
+  transition: transform 120ms ease-out;
+}
+.bc-live-badge--on {
+  background: var(--bc-pink);
+  color: var(--primary-foreground);
+  animation: bc-pulse 1.1s ease-in-out infinite;
+}
+.bc-live-badge--off {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.bc-live-dot {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--border);
+  background: currentColor;
+  display: inline-block;
+}
+.bc-live-badge--on .bc-live-dot {
+  background: var(--bc-yellow);
+}
+
+@keyframes bc-pulse {
+  0%, 100% { transform: translateY(0); box-shadow: 3px 3px 0 var(--border); }
+  50%      { transform: translateY(-2px); box-shadow: 3px 5px 0 var(--border); }
+}
+
+/* ---------- hero cps card ---------- */
+.bc-hero {
+  background: linear-gradient(135deg, rgba(255, 41, 117, 0.18), rgba(48, 229, 255, 0.18));
+  border: 3px solid var(--border);
+  box-shadow:
+    6px 6px 0 var(--border),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.05);
+  padding: 28px 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.bc-hero::before,
+.bc-hero::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--bc-yellow);
+  border: 3px solid var(--border);
+}
+.bc-hero::before { top: -3px; left: -3px; }
+.bc-hero::after  { bottom: -3px; right: -3px; }
+
+.bc-hero--live {
+  background: linear-gradient(135deg, rgba(255, 41, 117, 0.35), rgba(48, 229, 255, 0.30));
+}
+.bc-hero--live .bc-hero__number {
+  color: var(--bc-yellow);
+  text-shadow:
+    0 0 12px rgba(255, 225, 77, 0.7),
+    4px 4px 0 var(--border);
+  animation: bc-count-pop 0.9s ease-in-out infinite;
+}
+
+.bc-hero__label {
+  color: var(--bc-cyan);
+  margin-bottom: 10px;
+}
+.bc-hero__number {
+  font-size: clamp(3.5rem, 11vw, 6.5rem);
+  color: var(--foreground);
+  text-shadow: 4px 4px 0 var(--border);
+  letter-spacing: 0.02em;
+}
+.bc-hero__meta {
+  margin-top: 14px;
+  color: var(--muted-foreground);
+}
+.bc-hero__sep { margin: 0 10px; color: var(--bc-pink); }
+
+@keyframes bc-count-pop {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.04); }
+}
+
+/* ---------- preset chips ---------- */
+.bc-chip {
+  border: 3px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 3px 3px 0 var(--border);
+  cursor: pointer;
+  transition: transform 90ms ease-out, box-shadow 90ms ease-out, background 90ms;
+}
+.bc-chip:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--border);
+}
+.bc-chip:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--border);
+}
+.bc-chip--0.bc-chip--on { background: var(--bc-green);  color: var(--primary-foreground); }
+.bc-chip--1.bc-chip--on { background: var(--bc-cyan);   color: var(--primary-foreground); }
+.bc-chip--2.bc-chip--on { background: var(--bc-yellow); color: var(--primary-foreground); }
+.bc-chip--3.bc-chip--on { background: var(--bc-orange); color: var(--primary-foreground); }
+.bc-chip--4.bc-chip--on { background: var(--bc-pink);   color: var(--primary-foreground); }
+
+/* ---------- color-coded cards ---------- */
+.bc-card {
+  border: 3px solid var(--border) !important;
+  box-shadow: 5px 5px 0 var(--border);
+  padding: 0;
+  overflow: hidden;
+  background: var(--card);
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+}
+.bc-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 6px 6px 0 var(--border);
+}
+.bc-card--pink   { border-top: 10px solid var(--bc-pink)   !important; }
+.bc-card--cyan   { border-top: 10px solid var(--bc-cyan)   !important; }
+.bc-card--yellow { border-top: 10px solid var(--bc-yellow) !important; }
+.bc-card--orange { border-top: 10px solid var(--bc-orange) !important; }
+
+.bc-card__head {
+  padding: 14px 18px 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 2px dashed var(--muted);
+  margin-bottom: 12px;
+}
+.bc-card__head--pink   { color: var(--bc-pink); }
+.bc-card__head--cyan   { color: var(--bc-cyan); }
+.bc-card__head--yellow { color: var(--bc-yellow); }
+.bc-card__head--orange { color: var(--bc-orange); }
+
+/* ---------- pills (mouse L/R/M) ---------- */
+.bc-pill {
+  border: 3px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 2px 2px 0 var(--border);
+  cursor: pointer;
+  transition: transform 90ms ease-out, box-shadow 90ms ease-out, background 90ms;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.bc-pill:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--border);
+}
+.bc-pill--on-pink {
+  background: var(--bc-pink);
+  color: var(--primary-foreground);
+}
+
+/* ---------- capture buttons ---------- */
+.bc-capture {
+  border: 3px solid var(--border);
+  background: var(--input);
+  color: var(--foreground);
+  box-shadow: 3px 3px 0 var(--border);
+  cursor: pointer;
+  transition: transform 90ms ease-out, box-shadow 90ms, background 120ms;
+}
+.bc-capture:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--border);
+}
+.bc-capture--active-pink   { background: var(--bc-pink);   color: var(--primary-foreground); }
+.bc-capture--active-orange { background: var(--bc-orange); color: var(--primary-foreground); }
+.bc-capture--listening {
+  background: var(--bc-yellow);
+  color: var(--primary-foreground);
+  animation: bc-blink 0.6s steps(2, end) infinite;
+}
+
+@keyframes bc-blink {
+  from { opacity: 1; }
+  to   { opacity: 0.55; }
+}
+
+/* ---------- inputs ---------- */
+.bc-input {
+  border: 3px solid var(--border) !important;
+  background: var(--input) !important;
+  color: var(--foreground) !important;
+  box-shadow: 2px 2px 0 var(--border);
+  font-family: var(--font-head) !important;
+  font-size: 14px !important;
+  padding: 10px 12px !important;
+}
+.bc-input:focus { outline: none; box-shadow: 2px 2px 0 var(--bc-pink); }
+
+/* ---------- launch button ---------- */
+.bc-launch {
+  border: 3px solid var(--border) !important;
+  box-shadow: 6px 6px 0 var(--border);
+  text-shadow: 2px 2px 0 var(--border);
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out, background 120ms;
+}
+.bc-launch:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 7px 7px 0 var(--border);
+}
+.bc-launch:active {
+  transform: translate(3px, 3px);
+  box-shadow: 3px 3px 0 var(--border);
+}
+.bc-launch--start {
+  background: linear-gradient(135deg, var(--bc-green), var(--bc-cyan)) !important;
+  color: #04120a !important;
+}
+.bc-launch--stop {
+  background: linear-gradient(135deg, var(--bc-pink), var(--destructive)) !important;
+  color: var(--primary-foreground) !important;
+  animation: bc-pulse 1.0s ease-in-out infinite;
+}
+
+.bc-mini-chip {
+  display: inline-block;
+  background: var(--muted);
+  color: var(--bc-yellow);
+  border: 2px solid var(--border);
+  padding: 2px 6px;
+  margin: 0 2px;
+}
+
+/* ---------- capture overlay ---------- */
+.bc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(10, 4, 20, 0.65);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: bc-fadein 150ms ease-out;
+}
+.bc-overlay__box {
+  background: var(--card);
+  border: 4px solid var(--border);
+  box-shadow: 8px 8px 0 var(--bc-pink);
+  padding: 36px 48px;
+  text-align: center;
+  cursor: default;
+  position: relative;
+}
+.bc-overlay__box::before {
+  content: "";
+  position: absolute;
+  inset: -4px -4px -4px -4px;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 10px,
+    rgba(255, 225, 77, 0.08) 10px 20px
+  );
+  pointer-events: none;
+}
+.bc-overlay__title {
+  color: var(--bc-yellow);
+  text-shadow: 2px 2px 0 var(--border);
+  animation: bc-blink 0.8s steps(2, end) infinite;
+}
+.bc-overlay__sub {
+  color: var(--muted-foreground);
+}
+
+@keyframes bc-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

@@ -2,12 +2,12 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use global_hotkey::hotkey::{HotKey, Modifiers};
+use global_hotkey::hotkey::HotKey;
 use global_hotkey::{GlobalHotKeyEvent, GlobalHotKeyManager, HotKeyState};
 use parking_lot::Mutex;
 use tauri::{AppHandle, Emitter};
 
-use crate::action::KeyBinding;
+use crate::action::Hotkey;
 use crate::clicker::Clicker;
 
 pub struct HotkeyManager {
@@ -33,13 +33,11 @@ impl HotkeyManager {
         })
     }
 
-    pub fn register(&self, binding: KeyBinding) -> anyhow::Result<()> {
-        let Some(code) = binding.to_hotkey_code() else {
-            anyhow::bail!("binding `{:?}` is not a valid hotkey", binding);
+    pub fn register(&self, binding: &Hotkey) -> anyhow::Result<()> {
+        let Some(hotkey) = binding.to_global() else {
+            anyhow::bail!("`{}` can't be registered as a system hotkey", binding.label());
         };
-        let hotkey = HotKey::new(Some(Modifiers::empty()), code);
 
-        // Unregister old, then register new, holding the lock the whole time.
         let mut slot = self.current.lock();
         if let Some(old) = slot.take() {
             let _ = self.inner.unregister(old);

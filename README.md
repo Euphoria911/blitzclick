@@ -6,13 +6,17 @@ A fast, retro-styled desktop autoclicker. Pick a mouse button or any keyboard ke
 
 ## Features
 
-- **Target anything** — left/right/middle mouse click, or any keyboard key (letters, F1–F12, Space, Enter, Tab, …)
-- **Fast** — interval slider from **1 ms to 1000 ms**; the Rust engine fires `enigo` input events on a dedicated worker thread
-- **Global hotkey** — toggle on/off from any app with a single key (F1–F12 selectable in the UI, default **F6**)
+- **Target any key** — left/right/middle mouse click, or any physical keyboard key (letters, F1–F24, numpad, arrows, punctuation — press-to-bind, no dropdown gymnastics)
+- **Any CPS you want** — type a direct number for CPS or ms, pick a preset chip (CHILL / FAST / WILD / RAGE / MAX), hit ~600 CPS on Windows
+- **Live actual-CPS meter** — hero display shows the real measured click rate while running, not a theoretical target
+- **Any hotkey chord** — bind a system-wide toggle (default **F6**) with full modifier support (Ctrl/Shift/Alt/Meta)
 - **Stop condition** — run forever, or auto-stop after N clicks
-- **Live counter** — see click count in real time
 - **Native** — single ~4 MB desktop app, no browser, no Electron bloat
-- **Retro UI** — [RetroUI](https://retroui.dev) components, pixel font, CRT scanline overlay, synthwave palette
+- **Retro UI** — [RetroUI](https://retroui.dev) components, pixel font, CRT scanline overlay, color-coded cards
+
+## Performance
+
+On the Windows worker loop the sleep granularity caps top speed around **~600 CPS at `interval_ms = 1`**. The engine also calls `timeBeginPeriod(1)` at startup to guarantee ~1ms sleep resolution even when no other process has raised the global timer. The hero meter displays the **actual** measured rate so you always see ground truth.
 
 ## Install
 

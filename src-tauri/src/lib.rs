@@ -25,14 +25,10 @@ fn get_status(state: State<'_, AppState>) -> StatusPayload {
 }
 
 #[tauri::command]
-fn set_config(
-    config: ClickerConfig,
-    state: State<'_, AppState>,
-) -> Result<(), String> {
-    // Register the new hotkey first so the user gets a clean error if it's bad.
+fn set_config(config: ClickerConfig, state: State<'_, AppState>) -> Result<(), String> {
     state
         .hotkeys
-        .register(config.hotkey)
+        .register(&config.hotkey)
         .map_err(|e| e.to_string())?;
     state.clicker.update_config(config);
     Ok(())
@@ -56,8 +52,24 @@ fn toggle(state: State<'_, AppState>) -> StatusPayload {
     state.clicker.status()
 }
 
+/// On Windows the default sleep granularity is ~15.6 ms, which caps a
+/// `sleep(1ms)` loop at ~64 CPS. Raising the timer resolution to 1 ms lets
+/// the worker loop actually hit its target rate. Call once at startup; the OS
+/// will drop it back when the process exits.
+#[cfg(windows)]
+fn set_high_res_timer() {
+    unsafe {
+        winapi::um::timeapi::timeBeginPeriod(1);
+    }
+}
+
+#[cfg(not(windows))]
+fn set_high_res_timer() {}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    set_high_res_timer();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
@@ -68,17 +80,14 @@ pub fn run() {
                     .map_err(|e| format!("hotkey manager init failed: {e}"))?,
             );
             hotkeys
-                .register(config.hotkey)
+                .register(&config.hotkey)
                 .map_err(|e| format!("initial hotkey register failed: {e}"))?;
 
             let clicker = Arc::new(Clicker::new(app.handle().clone(), config));
 
             HotkeyManager::start_listener(Arc::clone(&clicker), app.handle().clone());
 
-            app.manage(AppState {
-                clicker,
-                hotkeys,
-            });
+            app.manage(AppState { clicker, hotkeys });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
