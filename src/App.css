@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Dark arcade palette — synthwave-ish, high contrast */
+    --background: #1a0b2e;
+    --foreground: #f5edd6;
+    --card: #22133d;
+    --card-foreground: #f5edd6;
+    --primary: #ff2975;
+    --primary-foreground: #0d0617;
+    --primary-hover: #ff5091;
+    --secondary: #30e5ff;
+    --secondary-foreground: #0d0617;
+    --secondary-hover: #6befff;
+    --accent: #ffe14d;
+    --accent-foreground: #0d0617;
+    --muted: #3a2a5c;
+    --muted-foreground: #c6b5e2;
+    --border: #0d0617;
+    --ring: #ff2975;
+    --destructive: #ff4538;
+    --destructive-foreground: #f5edd6;
+    --input: #2b1b4d;
+    --popover: #22133d;
+    --popover-foreground: #f5edd6;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-input: var(--input);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --font-head: "Press Start 2P", "Courier New", monospace;
+  --radius: 0px;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* CRT-style scanline overlay — subtle, non-interactive */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    rgba(0, 0, 0, 0.08) 2px 3px
+  );
+  z-index: 9999;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--card); }
+::-webkit-scrollbar-thumb { background: var(--primary); border: 2px solid var(--border); }
