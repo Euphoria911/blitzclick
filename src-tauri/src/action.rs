@@ -2,19 +2,14 @@ use enigo::{Button, Direction, Enigo, Key, Keyboard, Mouse};
 use global_hotkey::hotkey::Code;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "value")]
 pub enum ClickAction {
+    #[default]
     MouseLeft,
     MouseRight,
     MouseMiddle,
     Key(KeyBinding),
-}
-
-impl Default for ClickAction {
-    fn default() -> Self {
-        ClickAction::MouseLeft
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -37,6 +32,7 @@ pub enum KeyBinding {
 }
 
 impl Default for KeyBinding {
+    // Manual: the default is F(6), which isn't a unit variant so `#[default]` doesn't apply.
     fn default() -> Self {
         KeyBinding::F(6)
     }
